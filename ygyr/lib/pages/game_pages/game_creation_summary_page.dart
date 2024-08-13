@@ -4,7 +4,7 @@ class GameCreationSummaryPage extends StatelessWidget {
   final String gameName;
   final String scoreKeepingMethod;
   final int numberOfPlayers;
-  final Function(String, String, int) onCreate;
+  final Function(String, String, int, String?, double?) onCreate; // Updated to match the full signature
 
   GameCreationSummaryPage({
     required this.gameName,
@@ -22,44 +22,28 @@ class GameCreationSummaryPage extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center, // Center vertically
-          crossAxisAlignment: CrossAxisAlignment.start, // Align text to start
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Game Name:',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), // Highlighted style
+              'Game Name: $gameName',
+              style: TextStyle(fontSize: 20),
             ),
+            SizedBox(height: 8),
             Text(
-              gameName,
-              style: TextStyle(fontSize: 18),
+              'Score Keeping Method: $scoreKeepingMethod',
+              style: TextStyle(fontSize: 20),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 8),
             Text(
-              'Score Keeping Method:',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), // Highlighted style
+              'Number of Players: $numberOfPlayers',
+              style: TextStyle(fontSize: 20),
             ),
-            Text(
-              scoreKeepingMethod,
-              style: TextStyle(fontSize: 18),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Number of Players:',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), // Highlighted style
-            ),
-            Text(
-              '$numberOfPlayers',
-              style: TextStyle(fontSize: 18),
-            ),
-            SizedBox(height: 32), // Add spacing before button
+            SizedBox(height: 32),
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  onCreate(gameName, scoreKeepingMethod, numberOfPlayers);
-                  Navigator.pop(context); // Pop current page
-                  Navigator.pop(context); // Pop NumberOfPlayersPage
-                  Navigator.pop(context); // Pop ScoreKeepingMethodPage
-                  Navigator.pop(context); // Pop CreateGamePage
+                  onCreate(gameName, scoreKeepingMethod, numberOfPlayers, null, null); // Pass null for unused parameters
+                  Navigator.of(context).popUntil((route) => route.isFirst); // Close this page
                 },
                 child: Text('Create Game'),
               ),

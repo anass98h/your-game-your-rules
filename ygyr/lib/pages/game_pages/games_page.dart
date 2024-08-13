@@ -1,27 +1,41 @@
 import 'package:flutter/material.dart';
+import 'player_naming_page.dart';
+import 'boolean_scoring_page.dart';
+import 'numeric_scoring_page.dart';
 import 'create_game_page.dart'; // Import the CreateGamePage file
+import 'file_utils.dart'; // Import the utility functions
+
+class Player {
+  String name;
+  double wins;
+
+  Player(this.name, this.wins);
+}
 
 class Game {
   final String title;
   final String description;
+  final String scoreKeepingMethod;
+  final int numberOfPlayers;
+  final String? numericOperation; // Can be null if not numeric
+  final double? numericValue; // Can be null if not numeric
+  List<Player> players = [];
 
-  Game(this.title, this.description);
+  Game(this.title, this.description, this.scoreKeepingMethod, this.numberOfPlayers, {this.numericOperation, this.numericValue});
 }
-
 class GamesPage extends StatefulWidget {
   @override
   _GamesPageState createState() => _GamesPageState();
 }
+
 class _GamesPageState extends State<GamesPage> {
   String _searchQuery = '';
 
   List<Game> games = [
-    Game('Game 1', 'Description of Game 1'),
-    Game('Game 2', 'Description of Game 2'),
-    Game('Game 3', 'Description of Game 3'),
+    Game('Game 1', 'Description of Game 1', 'Boolean', 2),
+    Game('Game 2', 'Description of Game 2','Boolean', 3),
+    Game('Game 3', 'Description of Game 3', 'Boolean', 4),
   ];
-
-  int _selectedIndex = 0;
 
   List<Game> get filteredGames {
     return games
@@ -30,69 +44,37 @@ class _GamesPageState extends State<GamesPage> {
         .toList();
   }
 
-  List<Widget> get _widgetOptions {
-    return <Widget>[
-      GamesListPage(
-        games: filteredGames,
-        onSearch: (query) {
-          setState(() {
-            _searchQuery = query;
-          });
-        },
-      ),
-      Text('Players Page'), // Placeholder for Players Page
-      Text('Misc Page'), // Placeholder for Misc Page
-    ];
-  }
-
-  void _onItemTapped(int index) {
+  // Function to add a new game
+  void _addGame(String name, String method, int players, String? operation, double? value) { // Updated to accept five parameters
     setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  void _addGame(String name, String method, int players) {
-    setState(() {
-      games.add(Game(name, 'Score Keeping Method: $method, Players: $players'));
+      games.add(Game(name, 'Scorekeeping method: $method, Players: $players', method, players, numericOperation: operation, numericValue: value));
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Games App'),
-      ),
-      body: _widgetOptions.elementAt(_selectedIndex),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.games),
-            label: 'Games',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Players',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.more_horiz),
-            label: 'Misc',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
-        onTap: _onItemTapped,
-      ),
+    return GamesListPage(
+      games: filteredGames,
+      onSearch: (query) {
+        setState(() {
+          _searchQuery = query;
+        });
+      },
+      onCreateGame: _addGame,  // Pass the function to add a game
     );
   }
 }
 
-
 class GamesListPage extends StatelessWidget {
   final List<Game> games;
   final Function(String) onSearch;
+  final Function(String, String, int, String?, double?) onCreateGame;  // Updated to accept five parameters
 
-  GamesListPage({required this.games, required this.onSearch});
+  GamesListPage({
+    required this.games,
+    required this.onSearch,
+    required this.onCreateGame,  // Initialize the callback
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -134,29 +116,19 @@ class GamesListPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CreateGamePage(
-                        onCreate: (String name, String method, int players) {
-                          // handle game creation
-                        },
-                      ),
-                    ),
-                  );
-                },
-                child: Text('Create Game'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  // Add functionality here
+                onPressed: () async {
+                  if (games.isNotEmpty) {  // Example: export the first game in the list
+                    await exportGame(games.first);
+                  }
                 },
                 child: Text('Export Game'),
               ),
               ElevatedButton(
-                onPressed: () {
-                  // Add functionality here
+                onPressed: () async {
+                  await importGame(context, (game) {
+                    // Add the imported game to the list
+                    games.add(game);
+                  });
                 },
                 child: Text('Import Game'),
               ),
@@ -167,6 +139,7 @@ class GamesListPage extends StatelessWidget {
     );
   }
 }
+
 
 class GameDetailsPage extends StatelessWidget {
   final Game game;
@@ -193,26 +166,42 @@ class GameDetailsPage extends StatelessWidget {
               game.description,
               style: TextStyle(fontSize: 16),
             ),
+            SizedBox(height: 32),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  // Navigate to PlayerNamingPage
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PlayerNamingPage(
+                        game: game,
+                        onPlayersNamed: () {
+                          Navigator.pop(context); // Close the PlayerNamingPage
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) {
+                                if (game.scoreKeepingMethod == 'Numeric') {
+                                  return NumericScoringPage(game: game);
+                                } else if (game.scoreKeepingMethod == 'Boolean') {
+                                  return BooleanScoringPage(game: game);
+                                }
+                                return Container(); // Handle other cases or add more methods here
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                },
+                child: Text('Start Game'),
+              ),
+            ),
           ],
         ),
       ),
-    );
-  }
-}
-
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Games App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: GamesPage(),
     );
   }
 }

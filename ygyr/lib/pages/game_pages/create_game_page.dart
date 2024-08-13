@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'number_of_players_page.dart'; // Import the new page
 
 class CreateGamePage extends StatefulWidget {
-  final Function(String, String, int) onCreate; // Updated to accept three parameters
+  final Function(String, String, int, String?, double?) onCreate; // Updated to accept five parameters
 
   CreateGamePage({required this.onCreate});
 

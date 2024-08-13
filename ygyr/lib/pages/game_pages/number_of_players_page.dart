@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'score_keeping_method_page.dart'; // Import the score keeping method page
+import 'score_keeping_method_page.dart';
 
 class NumberOfPlayersPage extends StatefulWidget {
   final String gameName;
-  final Function(String, String, int) onCreate;
+  final Function(String, String, int, String?, double?) onCreate; // Updated to accept five parameters
 
   NumberOfPlayersPage({
     required this.gameName,
@@ -48,7 +48,7 @@ class _NumberOfPlayersPageState extends State<NumberOfPlayersPage> {
                       builder: (context) => ScoreKeepingMethodPage(
                         gameName: widget.gameName,
                         numberOfPlayers: players,
-                        onCreate: widget.onCreate,
+                        onCreate: widget.onCreate, // Pass the onCreate callback
                       ),
                     ),
                   );
